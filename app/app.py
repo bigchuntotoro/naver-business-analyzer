@@ -68,7 +68,9 @@ if st.button("지도 분석"):
 
 
         stores = store_api.get_stores(
-            "1150061500"
+            latitude=result["lat"],
+            longitude=result["lng"],
+            radius=500
         )
 
         map_obj = create_route_map(
