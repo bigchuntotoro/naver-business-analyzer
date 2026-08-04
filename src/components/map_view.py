@@ -5,7 +5,8 @@ def create_route_map(
     latitude,
     longitude,
     stores=None,
-    recommended=None
+    recommended=None,
+    startup_top5=None
 ):
 
     m = folium.Map(
@@ -85,6 +86,33 @@ def create_route_map(
                     icon="star"
                 )
             ).add_to(m)
+
+    # -------------------------
+    # TOP5 창업 추천 위치
+    # -------------------------
+
+    for item in startup_top5 or []:
+
+
+        folium.Marker(
+            [
+                item["추천위도"],
+                item["추천경도"]
+            ],
+
+            popup=(
+                "🏆 AI 창업 추천<br>"
+                f"{item['업종']}<br>"
+                f"점수 {item['점수']}점"
+            ),
+
+            icon=folium.Icon(
+                color="purple",
+                icon="star"
+            )
+
+        ).add_to(m)
+
 
 
     return m

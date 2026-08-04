@@ -18,6 +18,7 @@ from src.core.commercial_analyzer import CommercialAnalyzer
 from src.core.business_recommender import BusinessRecommender
 from src.core.business_score import BusinessScore
 from src.core.recommend_location import RecommendLocation
+from src.core.startup_location import StartupLocation
 
 st.set_page_config(page_title="AI 상권 분석", page_icon="📍", layout="wide")
 
@@ -100,6 +101,39 @@ if st.button("🚀 AI 상권 분석", type="primary"):
             recommended_categories
         )
 
+        # -------------------------
+        # TOP5 창업 위치 분석
+        # -------------------------
+
+        startup = StartupLocation(
+            stores
+        )
+
+
+        startup_results = startup.analyze()
+
+
+        top5 = startup_results[:5]
+
+
+        st.subheader(
+            "🏆 AI 추천 창업 TOP 5"
+        )
+
+
+        for item in top5:
+
+            st.write(
+                f"""
+        🔥 {item['업종']}
+        - 창업 점수 : {item['점수']}점
+        - 현재 매장수 : {item['매장수']}개
+        - 추천 위치 :
+        {item['추천위도']},
+        {item['추천경도']}
+        """
+            )
+
         st.write(
             "🔥 추천 매장 수:",
             len(recommended_stores)
@@ -112,8 +146,9 @@ if st.button("🚀 AI 상권 분석", type="primary"):
         map_obj = create_route_map(
             result["lat"],
             result["lng"],
-            stores or [],
-            recommended_stores
+            stores,
+            recommended_stores,
+            top5
         )
 
 
