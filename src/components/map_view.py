@@ -4,7 +4,8 @@ import folium
 def create_route_map(
     latitude,
     longitude,
-    stores=None
+    stores=None,
+    recommended=None
 ):
 
     m = folium.Map(
@@ -19,58 +20,71 @@ def create_route_map(
     # 분석 위치
 
     folium.Marker(
-
         [
             latitude,
             longitude
         ],
-
-        popup="분석 위치",
-
+        popup="📍 분석 위치",
         icon=folium.Icon(
             color="red",
-            icon="star"
+            icon="home"
         )
-
     ).add_to(m)
 
 
 
-    # 상권 마커
+    # 일반 상점 표시
 
-    if stores:
+    for store in stores or []:
 
-        for store in stores:
-
-            lat = store.get("lat")
-            lon = store.get("lon")
+        lat = store.get("lat")
+        lon = store.get("lon")
 
 
-            if lat is not None and lon is not None:
+        if lat and lon:
 
-                folium.Marker(
+            folium.Marker(
+                [
+                    lat,
+                    lon
+                ],
+                popup=(
+                    f"{store.get('bizesNm','상점')}<br>"
+                    f"{store.get('indsMclsNm','')}"
+                ),
+                icon=folium.Icon(
+                    color="blue",
+                    icon="info-sign"
+                )
+            ).add_to(m)
 
-                    [
-                        float(lat),
-                        float(lon)
-                    ],
 
-                    popup=store.get(
-                        "bizesNm",
-                        "상점"
-                    ),
 
-                    tooltip=store.get(
-                        "bizesNm",
-                        "상점"
-                    ),
+    # ⭐ AI 추천 업종 표시
 
-                    icon=folium.Icon(
-                        color="blue"
-                    )
+    for store in recommended or []:
 
-                ).add_to(m)
+        lat = store.get("lat")
+        lon = store.get("lon")
 
+
+        if lat and lon:
+
+            folium.Marker(
+                [
+                    lat,
+                    lon
+                ],
+                popup=(
+                    "🔥 AI 추천 업종<br>"
+                    f"{store.get('bizesNm','')}<br>"
+                    f"{store.get('indsMclsNm','')}"
+                ),
+                icon=folium.Icon(
+                    color="green",
+                    icon="star"
+                )
+            ).add_to(m)
 
 
     return m
