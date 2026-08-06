@@ -5,8 +5,3 @@ pandas
 numpy
 folium
 streamlit-folium
-geopy
-openai
-google-generativeai
-sqlalchemy
-pymysql
