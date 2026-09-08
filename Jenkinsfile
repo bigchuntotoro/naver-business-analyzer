@@ -11,20 +11,22 @@ pipeline {
         APP_DIR      = '/home/totoro/Pythonproject/business-analyzer'
         SERVICE_NAME = 'business-analyzer'
 
+
         // ==================================================
         // Python
         // ==================================================
 
-        VENV_DIR = '/home/totoro/Pythonproject/business-analyzer/venv'
-
+        VENV_DIR   = '/home/totoro/Pythonproject/business-analyzer/venv'
         PYTHON_BIN = '/usr/bin/python3'
+
 
         // ==================================================
         // Application User
         // ==================================================
 
-        APP_USER = 'totoro'
+        APP_USER  = 'totoro'
         APP_GROUP = 'totoro'
+
 
         // ==================================================
         // Streamlit
@@ -35,6 +37,7 @@ pipeline {
 
 
     stages {
+
 
         // ==================================================
         // 1. Checkout
@@ -68,7 +71,17 @@ pipeline {
                     echo "소스 배포 시작"
                     echo "===================================="
 
+
+                    # ----------------------------------------
+                    # Application Directory
+                    # ----------------------------------------
+
                     sudo mkdir -p "${APP_DIR}"
+
+
+                    # ----------------------------------------
+                    # Source Deploy
+                    # ----------------------------------------
 
                     sudo rsync -av \
                         --delete \
@@ -80,13 +93,20 @@ pipeline {
                         ./ \
                         "${APP_DIR}/"
 
+
                     echo "소스 복사 완료"
 
-                    echo "파일 소유권 변경"
 
-                    sudo chown -R "${APP_USER}:${APP_GROUP}" \
+                    # ----------------------------------------
+                    # Ownership
+                    # ----------------------------------------
+
+                    sudo chown -R \
+                        "${APP_USER}:${APP_GROUP}" \
                         "${APP_DIR}"
 
+
+                    echo "파일 소유권 변경 완료"
                     echo "소스 배포 완료"
                 '''
             }
@@ -94,7 +114,7 @@ pipeline {
 
 
         // ==================================================
-        // 3. Python Environment
+        // 3. Python Setup
         // ==================================================
 
         stage('Python Setup') {
@@ -108,8 +128,14 @@ pipeline {
                     echo "Python 환경 설정"
                     echo "===================================="
 
+
+                    # ----------------------------------------
+                    # System Python
+                    # ----------------------------------------
+
                     sudo -u "${APP_USER}" \
-                        "${PYTHON_BIN}" --version
+                        "${PYTHON_BIN}" \
+                        --version
 
 
                     # ----------------------------------------
@@ -121,7 +147,9 @@ pipeline {
                         echo "venv 생성"
 
                         sudo -u "${APP_USER}" \
-                            "${PYTHON_BIN}" -m venv "${VENV_DIR}"
+                            "${PYTHON_BIN}" \
+                            -m venv \
+                            "${VENV_DIR}"
 
                     else
 
@@ -131,12 +159,29 @@ pipeline {
 
 
                     # ----------------------------------------
-                    # pip upgrade
+                    # Virtual Environment Python Check
                     # ----------------------------------------
 
                     sudo -u "${APP_USER}" \
                         "${VENV_DIR}/bin/python" \
-                        -m pip install --upgrade pip
+                        --version
+
+
+                    # ----------------------------------------
+                    # pip Upgrade
+                    #
+                    # IMPORTANT:
+                    # pip 실행파일 직접 호출하지 않음
+                    # python -m pip 사용
+                    # ----------------------------------------
+
+                    echo "pip 업그레이드"
+
+                    sudo -u "${APP_USER}" \
+                        "${VENV_DIR}/bin/python" \
+                        -m pip \
+                        install \
+                        --upgrade pip
 
 
                     # ----------------------------------------
@@ -148,7 +193,8 @@ pipeline {
                         echo "requirements.txt 설치"
 
                         sudo -u "${APP_USER}" \
-                            "${VENV_DIR}/bin/pip" \
+                            "${VENV_DIR}/bin/python" \
+                            -m pip \
                             install \
                             -r "${APP_DIR}/requirements.txt"
 
@@ -180,8 +226,13 @@ pipeline {
                     echo "Python 문법 검사"
                     echo "===================================="
 
+
                     cd "${APP_DIR}"
 
+
+                    # ----------------------------------------
+                    # Python Compile Test
+                    # ----------------------------------------
 
                     sudo -u "${APP_USER}" \
                         "${VENV_DIR}/bin/python" \
@@ -198,7 +249,7 @@ pipeline {
 
 
         // ==================================================
-        // 5. Application Restart
+        // 5. Restart Application
         // ==================================================
 
         stage('Restart Application') {
@@ -212,15 +263,33 @@ pipeline {
                     echo "Application Restart"
                     echo "===================================="
 
-                    sudo systemctl restart "${SERVICE_NAME}"
+
+                    # ----------------------------------------
+                    # Restart
+                    # ----------------------------------------
+
+                    sudo systemctl restart \
+                        "${SERVICE_NAME}"
+
 
                     echo "서비스 재시작 완료"
 
+
+                    # ----------------------------------------
+                    # Wait
+                    # ----------------------------------------
+
                     sleep 5
+
+
+                    # ----------------------------------------
+                    # Systemd Status
+                    # ----------------------------------------
 
                     sudo systemctl is-active \
                         --quiet \
                         "${SERVICE_NAME}"
+
 
                     echo "서비스 상태: ACTIVE"
                 '''
@@ -283,6 +352,11 @@ pipeline {
 
     post {
 
+
+        // ==================================================
+        // SUCCESS
+        // ==================================================
+
         success {
 
             echo '''
@@ -298,6 +372,10 @@ Status      : 정상
         }
 
 
+        // ==================================================
+        // FAILURE
+        // ==================================================
+
         failure {
 
             echo '''
@@ -305,8 +383,10 @@ Status      : 정상
        DEPLOY FAILED
 ====================================
 Application : business-analyzer
+Service     : business-analyzer
 ====================================
 '''
+
 
             sh '''
                 echo "===== SYSTEMD STATUS ====="
@@ -327,6 +407,10 @@ Application : business-analyzer
             '''
         }
 
+
+        // ==================================================
+        // ALWAYS
+        // ==================================================
 
         always {
 
