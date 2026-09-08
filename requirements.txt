@@ -5,3 +5,4 @@ pandas
 numpy
 folium
 streamlit-folium
+python-dotenv>=1.0.0
