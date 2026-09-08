@@ -1,6 +1,5 @@
 import folium
 
-
 def create_route_map(
     latitude,
     longitude,
